@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An Amazon S3 trigger that uses rekognition APIs to detect faces
+Resources:
+  photoBucket:
+    Type: 'AWS::S3::Bucket'
+  rekogFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: main.lambda_handler
+      Runtime: python3.6
+      CodeUri: deploy/
+      Description: Runs facial analysis and then blurs on .jpg files put into an input folder of a trigger bucket.
+      MemorySize: 256
+      Timeout: 20
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - 's3:GetObject'
+              Resource: 'arn:aws:s3:::*'
+            - Effect: Allow
+              Action:
+                - 'rekognition:DetectFaces'
+                - 'rekognition:DetectLabels'
+              Resource: '*'
+      Events:
+        picUpload:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: photoBucket
+            Events:
+              - 's3:ObjectCreated:*'
